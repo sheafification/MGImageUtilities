@@ -89,6 +89,9 @@
     
     // Create appropriately modified image.
 	UIImage *image = nil;
+	
+/*
+ Disable this code, as it's not clear if it is thread safe
 #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 40000
 	if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 4.0) {
 		UIGraphicsBeginImageContextWithOptions(destRect.size, NO, 0.0); // 0.0 for scale means "correct scale for device's main screen".
@@ -100,7 +103,8 @@
 		UIGraphicsEndImageContext();
 	}
 #endif
-	if (!image) {
+*/
+	if(!image) {
 		// Try older method.
 		CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
 		CGContextRef context = CGBitmapContextCreate(NULL, fitSize.width, fitSize.height, 8, (fitSize.width * 4), 
@@ -111,7 +115,14 @@
 		CGImageRef finalImage = CGBitmapContextCreateImage(context);	
 		CGContextRelease(context);
 		CGColorSpaceRelease(colorSpace);
-		image = [UIImage imageWithCGImage:finalImage];
+		
+		//image = [UIImage imageWithCGImage:finalImage];
+		
+		image = [UIImage imageWithCGImage:finalImage 
+									scale:imageScaleFactor
+							  orientation:[self imageOrientation]
+				 ];
+		
 		CGImageRelease(finalImage);
 	}
 	
