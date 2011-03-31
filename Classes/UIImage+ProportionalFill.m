@@ -20,14 +20,18 @@
 	}
 #endif
 	
-    float sourceWidth = [self size].width * imageScaleFactor;
-    float sourceHeight = [self size].height * imageScaleFactor;
+	//logical measurements account for orientation, actual measurements are the dimensions of the underlying image array
+    float logicalSourceWidth = [self size].width * imageScaleFactor;
+    float logicalSourceHeight = [self size].height * imageScaleFactor;
+	float actualSourceWidth = CGImageGetWidth([self CGImage]);
+	float actualSourceHeight = CGImageGetHeight([self CGImage]);
+	
     float targetWidth = fitSize.width;
     float targetHeight = fitSize.height;
     BOOL cropping = !(resizeMethod == MGImageResizeScale);
 	
     // Calculate aspect ratios
-    float sourceRatio = sourceWidth / sourceHeight;
+    float sourceRatio = logicalSourceWidth / logicalSourceHeight;
     float targetRatio = targetWidth / targetHeight;
     
     // Determine what side of the source image to use for proportional scaling
@@ -46,9 +50,10 @@
         scaledWidth = round(targetHeight * scalingFactor);
         scaledHeight = targetHeight;
     }
-    float scaleFactor = scaledHeight / sourceHeight;
+    float scaleFactor = scaledHeight / logicalSourceHeight;
     
     // Calculate compositing rectangles
+	// UNTESTED: cropping may not perform correctly on images with rotated orientation
     CGRect sourceRect, destRect;
     if (cropping) {
         destRect = CGRectMake(0, 0, targetWidth, targetHeight);
@@ -83,7 +88,7 @@
         sourceRect = CGRectMake(destX / scaleFactor, destY / scaleFactor, 
                                 targetWidth / scaleFactor, targetHeight / scaleFactor);
     } else {
-        sourceRect = CGRectMake(0, 0, sourceWidth, sourceHeight);
+        sourceRect = CGRectMake(0, 0, actualSourceWidth, actualSourceHeight);
         destRect = CGRectMake(0, 0, scaledWidth, scaledHeight);
     }
     
