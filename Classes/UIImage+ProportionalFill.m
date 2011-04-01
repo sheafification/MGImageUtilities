@@ -20,18 +20,36 @@
 	}
 #endif
 	
-	//logical measurements account for orientation, actual measurements are the dimensions of the underlying image array
-    float logicalSourceWidth = [self size].width * imageScaleFactor;
-    float logicalSourceHeight = [self size].height * imageScaleFactor;
-	float actualSourceWidth = CGImageGetWidth([self CGImage]);
-	float actualSourceHeight = CGImageGetHeight([self CGImage]);
+	float sourceWidth;
+	float sourceHeight;
+    float targetWidth;
+    float targetHeight;
 	
-    float targetWidth = fitSize.width;
-    float targetHeight = fitSize.height;
+	switch ([self imageOrientation]) {
+		case UIImageOrientationUp:
+		case UIImageOrientationDown:
+		case UIImageOrientationUpMirrored:
+		case UIImageOrientationDownMirrored:
+			sourceWidth = [self size].width * imageScaleFactor;
+			sourceHeight = [self size].height * imageScaleFactor;
+			targetWidth = fitSize.width;
+			targetHeight = fitSize.height;
+			break;
+		case UIImageOrientationLeft:
+		case UIImageOrientationRight:
+		case UIImageOrientationLeftMirrored:
+		case UIImageOrientationRightMirrored:
+			sourceWidth = [self size].height * imageScaleFactor;
+			sourceHeight = [self size].width * imageScaleFactor;
+			targetWidth = fitSize.height;
+			targetHeight = fitSize.width;
+			break;
+	}
+	
     BOOL cropping = !(resizeMethod == MGImageResizeScale);
 	
     // Calculate aspect ratios
-    float sourceRatio = logicalSourceWidth / logicalSourceHeight;
+    float sourceRatio = sourceWidth / sourceHeight;
     float targetRatio = targetWidth / targetHeight;
     
     // Determine what side of the source image to use for proportional scaling
@@ -50,7 +68,7 @@
         scaledWidth = round(targetHeight * scalingFactor);
         scaledHeight = targetHeight;
     }
-    float scaleFactor = scaledHeight / logicalSourceHeight;
+    float scaleFactor = scaledHeight / sourceHeight;
     
     // Calculate compositing rectangles
 	// UNTESTED: cropping may not perform correctly on images with rotated orientation
@@ -88,7 +106,7 @@
         sourceRect = CGRectMake(destX / scaleFactor, destY / scaleFactor, 
                                 targetWidth / scaleFactor, targetHeight / scaleFactor);
     } else {
-        sourceRect = CGRectMake(0, 0, actualSourceWidth, actualSourceHeight);
+        sourceRect = CGRectMake(0, 0, sourceWidth, sourceHeight);
         destRect = CGRectMake(0, 0, scaledWidth, scaledHeight);
     }
     
@@ -112,7 +130,7 @@
 	if(!image) {
 		// Try older method.
 		CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-		CGContextRef context = CGBitmapContextCreate(NULL, fitSize.width, fitSize.height, 8, (fitSize.width * 4), 
+		CGContextRef context = CGBitmapContextCreate(NULL, targetWidth, targetHeight, 8, (targetWidth * 4), 
 													 colorSpace, kCGImageAlphaPremultipliedLast);
 		CGImageRef sourceImg = CGImageCreateWithImageInRect([self CGImage], sourceRect);
 		CGContextDrawImage(context, destRect, sourceImg);
