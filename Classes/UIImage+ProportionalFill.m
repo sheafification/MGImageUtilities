@@ -107,7 +107,7 @@
                                 targetWidth / scaleFactor, targetHeight / scaleFactor);
     } else {
         sourceRect = CGRectMake(0, 0, sourceWidth, sourceHeight);
-        destRect = CGRectMake(0, 0, scaledWidth, scaledHeight);
+        destRect = CGRectMake((targetWidth - scaledWidth) / 2.0, (targetHeight - scaledHeight) / 2.0, scaledWidth, scaledHeight);
     }
     
     // Create appropriately modified image.
